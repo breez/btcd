@@ -13,6 +13,7 @@ import (
 	"math/rand"
 	"net"
 	"strconv"
+	"strings"
 	"sync"
 	"sync/atomic"
 	"time"
@@ -1060,6 +1061,14 @@ func (p *Peer) handleRemoteVersionMsg(msg *wire.MsgVersion) error {
 		reason := fmt.Sprintf("protocol version must be %d or greater",
 			minAcceptableProtocolVersion)
 		return errors.New(reason)
+	}
+
+	if p.Inbound() {
+		neutrino := strings.Contains(msg.UserAgent, "/neutrino:")
+		if !neutrino {
+			log.Errorf("inbound: UserAgent: %v, neutrino: %v", msg.UserAgent, neutrino)
+			return errors.New("Neutrino only")
+		}
 	}
 
 	// Updating a bunch of stats including block based stats, and the
