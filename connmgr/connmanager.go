@@ -202,6 +202,16 @@ func (cm *ConnManager) handleFailedConn(c *ConnReq) {
 		}
 		log.Debugf("Retrying connection to %v in %v", c, d)
 		time.AfterFunc(d, func() {
+
+			//During the time we wait for retry there is a chance that
+			//this connection was already cancelled, we need to check that before
+			//proceeding to Connectd and return early if necessary.
+			if c.State() == ConnCanceled {
+				log.Debugf("Ignoring retry for "+
+					"canceled connreq=%v", c)
+				return
+			}
+
 			cm.Connect(c)
 		})
 	} else if cm.cfg.GetNewAddress != nil {
